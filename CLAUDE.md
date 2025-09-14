@@ -25,4 +25,9 @@
 5. Git commit with descriptive message
 6. Move to next step
 
+### Git Best Practices
+- **Never commit working directories** like `vystup/`, `uploads/`, `test_output/`
+- **Always add to .gitignore** any directories that contain generated or temporary files
+- **Use .gitignore** for build artifacts, logs, cache files, and user-specific content
+
 This configuration ensures systematic, documented, and version-controlled development process.
