@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Working directories
+vystup/
+uploads/
+test_output/
