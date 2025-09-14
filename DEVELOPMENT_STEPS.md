@@ -7,9 +7,10 @@
 - **Čas**: 5 min
 - **Status**: DOKONČENÉ - Závislosti nainštalované cez `uv sync`
 
-### Krok 1.2: Vytvorenie adresárovej štruktúry
+### Krok 1.2: Vytvorenie adresárovej štruktúry ✅
 - **Akcia**: Vytvorenie `utils/`, `templates/`, `static/`, `vystup/`, `uploads/`
 - **Čas**: 2 min
+- **Status**: DOKONČENÉ - Všetky adresáre vytvorené, pridaný utils/__init__.py
 
 ## Fáza 2: Základná aplikácia
 ### Krok 2.1: FastAPI setup
