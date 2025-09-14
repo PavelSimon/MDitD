@@ -209,12 +209,13 @@ async def process_single_file_async(file: UploadFile, output_dir: Optional[str])
                 output_path
             )
 
-            # Return result
+            # Return result with content for preview
             return {
                 "filename": file.filename,
                 "success": result['success'],
                 "error": result.get('error'),
-                "output_path": result.get('output_path') if result['success'] else None
+                "output_path": result.get('output_path') if result['success'] else None,
+                "content": result.get('content') if result['success'] else None
             }
 
     except FileNotFoundError:

@@ -109,16 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         // Individual file results
-        result.results.forEach(file => {
+        result.results.forEach((file, index) => {
             const statusIcon = file.success ? '✅' : '❌';
             const statusClass = file.success ? 'success' : 'danger';
-            
+
             html += `
                 <div class="alert alert-${statusClass} alert-dismissible">
                     <strong>${statusIcon} ${file.filename}</strong>
                     <br>
-                    ${file.success ? 
-                        `<small class="text-muted">Saved to: ${file.output_path}</small>` : 
+                    ${file.success ?
+                        `<small class="text-muted">Saved to: ${file.output_path}</small>
+                         ${file.content ? `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showPreview('${file.filename}', \`${escapeHtml(file.content)}\`)">
+                            <i class="fas fa-eye"></i> Preview
+                         </button>` : ''}` :
                         `<small>Error: ${file.error}</small>`
                     }
                 </div>
@@ -423,4 +426,121 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1000); // Keep visible for 1 second after completion
         }
     }
+
+    // Initialize preview functionality
+    initializePreview();
 });
+
+// ====== MARKDOWN PREVIEW FUNCTIONS ======
+
+function initializePreview() {
+    const renderedViewBtn = document.getElementById('renderedViewBtn');
+    const rawViewBtn = document.getElementById('rawViewBtn');
+
+    if (renderedViewBtn && rawViewBtn) {
+        renderedViewBtn.addEventListener('change', () => {
+            if (renderedViewBtn.checked) {
+                showRenderedPreview();
+            }
+        });
+
+        rawViewBtn.addEventListener('change', () => {
+            if (rawViewBtn.checked) {
+                showRawPreview();
+            }
+        });
+    }
+}
+
+function showPreview(filename, content) {
+    const previewSection = document.getElementById('previewSection');
+    const renderedPreview = document.getElementById('renderedPreview');
+    const rawContent = document.getElementById('rawContent');
+    const renderedViewBtn = document.getElementById('renderedViewBtn');
+
+    if (!content || content.trim() === '') {
+        content = 'No content available for preview.';
+    }
+
+    // Update content
+    rawContent.textContent = content;
+
+    // Render markdown using marked.js if available
+    if (typeof marked !== 'undefined') {
+        try {
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+                        return hljs.highlight(code, {language: lang}).value;
+                    }
+                    return code;
+                },
+                breaks: true,
+                gfm: true
+            });
+
+            renderedPreview.innerHTML = marked.parse(content);
+
+            // Highlight code blocks
+            if (typeof hljs !== 'undefined') {
+                renderedPreview.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        } catch (error) {
+            console.warn('Error rendering markdown:', error);
+            renderedPreview.innerHTML = `<pre>${escapeHtml(content)}</pre>`;
+        }
+    } else {
+        // Fallback if marked.js is not available
+        renderedPreview.innerHTML = `<pre>${escapeHtml(content)}</pre>`;
+    }
+
+    // Update preview title
+    const previewTitle = previewSection.querySelector('.card-header h6');
+    if (previewTitle) {
+        previewTitle.innerHTML = `<i class="fas fa-eye text-primary me-2"></i>Markdown Preview - ${filename}`;
+    }
+
+    // Show rendered view by default
+    renderedViewBtn.checked = true;
+    showRenderedPreview();
+
+    // Show and scroll to preview
+    previewSection.classList.remove('d-none');
+    previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showRenderedPreview() {
+    const renderedPreview = document.getElementById('renderedPreview');
+    const rawPreview = document.getElementById('rawPreview');
+
+    if (renderedPreview && rawPreview) {
+        renderedPreview.classList.remove('d-none');
+        rawPreview.classList.add('d-none');
+    }
+}
+
+function showRawPreview() {
+    const renderedPreview = document.getElementById('renderedPreview');
+    const rawPreview = document.getElementById('rawPreview');
+
+    if (renderedPreview && rawPreview) {
+        renderedPreview.classList.add('d-none');
+        rawPreview.classList.remove('d-none');
+    }
+}
+
+function hidePreview() {
+    const previewSection = document.getElementById('previewSection');
+    if (previewSection) {
+        previewSection.classList.add('d-none');
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
