@@ -64,10 +64,12 @@
 - **Status**: DOKONČENÉ - Kompletný frontend pre upload a results handling
 
 ## Fáza 5: Vylepšenia
-### Krok 5.1: JavaScript enhancements
-- **Súbor**: `static/js/app.js`
-- **Akcia**: Frontend logika pre progress, validation
+### Krok 5.1: JavaScript enhancements ✅
+- **Súbor**: `static/js/app.js`, `static/css/style.css`, `templates/index.html`
+- **Akcia**: Frontend logika pre progress, validation, drag & drop
+- **Funkcionalita**: File validation, progress tracking, drag & drop support, file preview
 - **Čas**: 20 min
+- **Status**: DOKONČENÉ - Kompletné frontend vylepšenia implementované
 
 ### Krok 5.2: Error handling
 - **Súbor**: Všetky súbory
