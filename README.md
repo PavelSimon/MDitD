@@ -1,34 +1,34 @@
-# MDitD - MarkItDown Web Aplik�cia
+# MDitD - MarkItDown Web Aplikácia
 
-R�chla web aplik�cia na konverziu dokumentov do Markdown form�tu pomocou Microsoft MarkItDown.
+Rýchla web aplikácia na konverziu dokumentov do Markdown formátu pomocou Microsoft MarkItDown.
 
-## S�bory projektu
+## Súbory projektu
 
-### Pl�novacie dokumenty
-- **`PLAN.md`** - Kompletn� pl�n projektu, technick� stack, atrukt�ra
-- **`DEVELOPMENT_STEPS.md`** - Detailn� postup v�voja po krokoch s asov�mi odhadmi
+### Plánovacie dokumenty
+- **`PLAN.md`** - Kompletný plán projektu, technický stack, štruktúra
+- **`DEVELOPMENT_STEPS.md`** - Detailný postup vývoja po krokoch s časovými odhadmi
 
-### Hlavn� s�bory aplik�cie
-- **`main.py`** - FastAPI aplik�cia, hlavn� entry point
-- **`pyproject.toml`** - Python projekt konfigur�cia a z�vislosti
+### Hlavné súbory aplikácie
+- **`main.py`** - FastAPI aplikácia, hlavný entry point
+- **`pyproject.toml`** - Python projekt konfigurácia a závislosti
 
-### Aplikan� logika (utils/)
+### Aplikačná logika (utils/)
 - **`utils/converter.py`** - MarkItDown konverzia logika
-- **`utils/file_handler.py`** - Spr�va s�borov a adres�rov
+- **`utils/file_handler.py`** - Správa súborov a adresárov
 
 ### Frontend (templates/ a static/)
-- **`templates/index.html`** - Hlavn� str�nka s upload formul�rom
-- **`templates/success.html`** - Str�nka �speanej konverzie
-- **`templates/error.html`** - Error handling str�nka
-- **`static/css/style.css`** - Vlastn� CSS at�ly
+- **`templates/index.html`** - Hlavná stránka s upload formulárom
+- **`templates/success.html`** - Stránka úspešnej konverzie
+- **`templates/error.html`** - Error handling stránka
+- **`static/css/style.css`** - Vlastné CSS štýly
 - **`static/js/app.js`** - Frontend JavaScript
 
-### Pracovn� adres�re
-- **`vystup/`** - Default adres�r pre MD v�stupn� s�bory
-- **`uploads/`** - Doasn� adres�r pre nahrat� s�bory
+### Pracovné adresáre
+- **`vystup/`** - Default adresár pre MD výstupné súbory
+- **`uploads/`** - Dočasný adresár pre nahraté súbory
 
-## Podporovan� form�ty
-PDF, Word, Excel, PowerPoint, obr�zky, audio, HTML, CSV, JSON, XML, ZIP
+## Podporované formáty
+PDF, Word, Excel, PowerPoint, obrázky, audio, HTML, CSV, JSON, XML, ZIP
 
 ## Spustenie
 ```bash
