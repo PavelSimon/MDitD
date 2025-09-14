@@ -71,7 +71,14 @@
 - **Čas**: 20 min
 - **Status**: DOKONČENÉ - Kompletné frontend vylepšenia implementované
 
-### Krok 5.2: Error handling
+### Krok 5.2: Performance improvements (Krok 3 z IMPROVEMENTS.md) ✅
+- **Súbor**: `main.py`, `utils/file_handler.py`, `pyproject.toml`
+- **Akcia**: Async file operations, concurrent processing, memory optimization
+- **Funkcionalita**: aiofiles integration, asyncio.gather, ThreadPoolExecutor, streaming uploads
+- **Čas**: 2 hodiny
+- **Status**: DOKONČENÉ - Výkonové vylepšenia implementované a testované
+
+### Krok 5.3: Error handling
 - **Súbor**: Všetky súbory
 - **Akcia**: Komplexné error handling
 - **Čas**: 15 min
