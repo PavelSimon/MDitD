@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import re
+import contextlib
 from pathlib import Path
 from typing import Optional, List
 import logging
@@ -218,3 +219,19 @@ class FileHandler:
         except Exception as e:
             logger.error(f"Error listing files in {target_dir}: {str(e)}")
             return []
+    
+    @contextlib.contextmanager
+    def temporary_file(self, file_content: bytes, filename: str):
+        """Context manager for safe temporary file handling."""
+        temp_path = None
+        try:
+            temp_path = self.save_uploaded_file(file_content, filename)
+            logger.info(f"Created temporary file: {temp_path}")
+            yield temp_path
+        finally:
+            if temp_path and Path(temp_path).exists():
+                success = self.cleanup_temp_file(temp_path)
+                if success:
+                    logger.info(f"Cleaned up temporary file: {temp_path}")
+                else:
+                    logger.warning(f"Failed to clean up temporary file: {temp_path}")
