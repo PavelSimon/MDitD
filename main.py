@@ -1,8 +1,9 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, AsyncGenerator
 import uvicorn
 import os
 import asyncio
@@ -21,10 +22,33 @@ setup_logging()
 # Track application start time for uptime calculation
 start_time = time.time()
 
+# Configure ThreadPoolExecutor for concurrent file processing
+executor = ThreadPoolExecutor(max_workers=settings.max_concurrent_files, thread_name_prefix="file_processor")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """
+    Lifespan event handler for application startup and shutdown.
+
+    Args:
+        app: FastAPI application instance
+
+    Yields:
+        None: Control during application lifetime
+    """
+    # Startup
+    log_system_info()
+
+    yield
+
+    # Shutdown
+    executor.shutdown(wait=True)
+
 app = FastAPI(
     title=settings.app_title,
     description=settings.app_description,
-    version=settings.app_version
+    version=settings.app_version,
+    lifespan=lifespan
 )
 
 # Mount static files
@@ -36,9 +60,6 @@ templates = Jinja2Templates(directory="templates")
 # Initialize services
 converter = DocumentConverter()
 file_handler = FileHandler()
-
-# Configure ThreadPoolExecutor for concurrent file processing
-executor = ThreadPoolExecutor(max_workers=settings.max_concurrent_files, thread_name_prefix="file_processor")
 
 @app.get("/")
 async def root(request: Request):
@@ -322,15 +343,6 @@ async def get_supported_formats() -> Dict[str, List[str]]:
     """Get list of supported file formats."""
     return {"supported_formats": converter.get_supported_formats()}
 
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize application on startup."""
-    log_system_info()
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    """Clean up resources on application shutdown."""
-    executor.shutdown(wait=True)
 
 def main() -> None:
     """Main entry point for the application."""
