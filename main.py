@@ -2,24 +2,29 @@ from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uvicorn
 import os
 import asyncio
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
 from utils.converter import DocumentConverter
 from utils.file_handler import FileHandler
-from config import (
-    MAX_FILE_SIZE, MAX_TOTAL_SIZE, MAX_FILES_COUNT, MIN_FILE_SIZE,
-    MAX_FILENAME_LENGTH, MAX_OUTPUT_DIR_LENGTH,
-    FORBIDDEN_FILENAME_PATTERNS, FORBIDDEN_OUTPUT_DIR_PATTERNS
-)
+from settings import settings
+from logging_config import setup_logging, log_system_info, log_request_info, log_file_processing
+
+# Initialize logging
+setup_logging()
+
+# Track application start time for uptime calculation
+start_time = time.time()
 
 app = FastAPI(
-    title="MDitD - MarkItDown Web App",
-    description="Convert documents to Markdown via web interface",
-    version="0.1.0"
+    title=settings.app_title,
+    description=settings.app_description,
+    version=settings.app_version
 )
 
 # Mount static files
@@ -33,17 +38,73 @@ converter = DocumentConverter()
 file_handler = FileHandler()
 
 # Configure ThreadPoolExecutor for concurrent file processing
-executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="file_processor")
+executor = ThreadPoolExecutor(max_workers=settings.max_concurrent_files, thread_name_prefix="file_processor")
 
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy", "service": "MDitD"}
+async def health_check() -> Dict[str, Any]:
+    """
+    Enhanced health check endpoint with system status.
 
-async def process_single_file_async(file: UploadFile, output_dir: Optional[str]) -> dict:
+    Returns:
+        Dict[str, Any]: Health status information including system components
+    """
+    import platform
+    import psutil
+
+    # Check converter status
+    converter_status = "healthy"
+    try:
+        supported_formats = converter.get_supported_formats()
+        if not supported_formats:
+            converter_status = "unhealthy"
+    except Exception:
+        converter_status = "error"
+
+    # Check filesystem status
+    fs_status = "healthy"
+    try:
+        uploads_path = settings.get_uploads_path()
+        output_path = settings.get_output_path()
+        if not uploads_path.exists() or not output_path.exists():
+            fs_status = "unhealthy"
+    except Exception:
+        fs_status = "error"
+
+    # Get system metrics
+    memory_info = psutil.virtual_memory()
+    disk_info = psutil.disk_usage('.')
+
+    return {
+        "status": "healthy" if all([
+            converter_status == "healthy",
+            fs_status == "healthy"
+        ]) else "degraded",
+        "service": "MDitD",
+        "version": settings.app_version,
+        "timestamp": time.time(),
+        "uptime": time.time() - start_time if 'start_time' in globals() else None,
+        "components": {
+            "converter": converter_status,
+            "filesystem": fs_status
+        },
+        "system": {
+            "platform": platform.system(),
+            "python_version": platform.python_version(),
+            "memory_usage": f"{memory_info.percent}%",
+            "disk_usage": f"{disk_info.percent}%"
+        },
+        "config": {
+            "max_file_size_mb": settings.get_max_file_size_mb(),
+            "max_concurrent_files": settings.max_concurrent_files,
+            "supported_formats_count": len(settings.supported_extensions)
+        }
+    }
+
+async def process_single_file_async(file: UploadFile, output_dir: Optional[str]) -> Dict[str, Any]:
     """
     Process a single file asynchronously with better error handling.
 
@@ -64,15 +125,15 @@ async def process_single_file_async(file: UploadFile, output_dir: Optional[str])
             }
 
         # Validate filename length
-        if len(file.filename) > MAX_FILENAME_LENGTH:
+        if len(file.filename) > settings.max_filename_length:
             return {
                 "filename": file.filename[:50] + "...",  # Truncate for display
                 "success": False,
-                "error": f"Filename too long ({len(file.filename)} characters). Maximum allowed is {MAX_FILENAME_LENGTH} characters."
+                "error": f"Filename too long ({len(file.filename)} characters). Maximum allowed is {settings.max_filename_length} characters."
             }
 
         # Check for forbidden characters in filename
-        forbidden_chars_found = [pattern for pattern in FORBIDDEN_FILENAME_PATTERNS if pattern in file.filename]
+        forbidden_chars_found = [pattern for pattern in settings.forbidden_filename_patterns if pattern in file.filename]
         if forbidden_chars_found:
             return {
                 "filename": file.filename,
@@ -82,7 +143,7 @@ async def process_single_file_async(file: UploadFile, output_dir: Optional[str])
 
         # Validate file size (individual check within processing loop)
         if hasattr(file, 'size') and file.size is not None:
-            if file.size < MIN_FILE_SIZE:
+            if file.size < settings.min_file_size:
                 return {
                     "filename": file.filename,
                     "success": False,
@@ -174,22 +235,22 @@ async def upload_files(
             detail="No files provided. Please select at least one file to upload."
         )
 
-    if len(files) > MAX_FILES_COUNT:
+    if len(files) > settings.max_files_count:
         raise HTTPException(
             status_code=400,
-            detail=f"Too many files ({len(files)}). Maximum allowed is {MAX_FILES_COUNT} files per upload."
+            detail=f"Too many files ({len(files)}). Maximum allowed is {settings.max_files_count} files per upload."
         )
 
     # Validate output directory
     if output_dir:
-        if len(output_dir) > MAX_OUTPUT_DIR_LENGTH:
+        if len(output_dir) > settings.max_output_dir_length:
             raise HTTPException(
                 status_code=400,
-                detail=f"Output directory name too long ({len(output_dir)} characters). Maximum allowed is {MAX_OUTPUT_DIR_LENGTH} characters."
+                detail=f"Output directory name too long ({len(output_dir)} characters). Maximum allowed is {settings.max_output_dir_length} characters."
             )
 
         # Check for forbidden patterns in output directory
-        for pattern in FORBIDDEN_OUTPUT_DIR_PATTERNS:
+        for pattern in settings.forbidden_output_dir_patterns:
             if pattern in output_dir:
                 raise HTTPException(
                     status_code=400,
@@ -207,25 +268,25 @@ async def upload_files(
     total_size = 0
     for file in files:
         if hasattr(file, 'size') and file.size:
-            if file.size > MAX_FILE_SIZE:
+            if file.size > settings.max_file_size:
                 raise HTTPException(
                     status_code=413,
-                    detail=f"File '{file.filename}' is too large ({file.size:,} bytes). Maximum allowed size is {MAX_FILE_SIZE:,} bytes ({MAX_FILE_SIZE//1024//1024} MB). Please compress or split the file."
+                    detail=f"File '{file.filename}' is too large ({file.size:,} bytes). Maximum allowed size is {settings.max_file_size:,} bytes ({settings.get_max_file_size_mb()} MB). Please compress or split the file."
                 )
             total_size += file.size
 
-    if total_size > MAX_TOTAL_SIZE:
+    if total_size > settings.max_total_size:
         raise HTTPException(
             status_code=413,
-            detail=f"Total upload size ({total_size:,} bytes) exceeds limit ({MAX_TOTAL_SIZE:,} bytes, {MAX_TOTAL_SIZE//1024//1024} MB). Please reduce the number of files or compress them."
+            detail=f"Total upload size ({total_size:,} bytes) exceeds limit ({settings.max_total_size:,} bytes, {settings.get_max_total_size_mb()} MB). Please reduce the number of files or compress them."
         )
 
     # Process files concurrently using asyncio.gather
     # Limit concurrency to prevent resource exhaustion
-    max_concurrent = min(4, len(files))
+    max_concurrent = min(settings.max_concurrent_files, len(files))
     semaphore = asyncio.Semaphore(max_concurrent)
 
-    async def process_with_semaphore(file: UploadFile) -> dict:
+    async def process_with_semaphore(file: UploadFile) -> Dict[str, Any]:
         async with semaphore:
             return await process_single_file_async(file, output_dir)
 
@@ -257,17 +318,28 @@ async def upload_files(
     })
 
 @app.get("/formats")
-async def get_supported_formats():
+async def get_supported_formats() -> Dict[str, List[str]]:
     """Get list of supported file formats."""
     return {"supported_formats": converter.get_supported_formats()}
 
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Initialize application on startup."""
+    log_system_info()
+
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Clean up resources on application shutdown."""
     executor.shutdown(wait=True)
 
-def main():
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+def main() -> None:
+    """Main entry point for the application."""
+    uvicorn.run(
+        "main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.reload
+    )
 
 if __name__ == "__main__":
     main()

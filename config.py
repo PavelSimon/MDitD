@@ -1,52 +1,40 @@
 """
 Configuration constants for MDitD application.
+DEPRECATED: This module is being replaced by settings.py with pydantic-settings.
+Kept for backward compatibility during migration.
 """
+import warnings
 from pathlib import Path
+from settings import settings
 
-# File handling constants
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-MAX_TOTAL_SIZE = 500 * 1024 * 1024  # 500MB
-UPLOAD_CHUNK_SIZE = 8192
-DEFAULT_UPLOADS_DIR = "uploads"
-DEFAULT_OUTPUT_DIR = "vystup"
+# Deprecation warning
+warnings.warn(
+    "config.py is deprecated. Use settings.py instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
-# Server constants
-DEFAULT_HOST = "0.0.0.0"
-DEFAULT_PORT = 8001
-DEFAULT_RELOAD = True
+# File handling constants (mapped from settings)
+MAX_FILE_SIZE = settings.max_file_size
+MAX_TOTAL_SIZE = settings.max_total_size
+UPLOAD_CHUNK_SIZE = settings.upload_chunk_size
+DEFAULT_UPLOADS_DIR = settings.uploads_dir
+DEFAULT_OUTPUT_DIR = settings.output_dir
 
-# File validation constants
-MAX_FILES_COUNT = 20  # Maximum number of files in single upload
-MIN_FILE_SIZE = 1  # Minimum file size (1 byte)
-MAX_FILENAME_LENGTH = 255
-MAX_OUTPUT_DIR_LENGTH = 100
+# Server constants (mapped from settings)
+DEFAULT_HOST = settings.host
+DEFAULT_PORT = settings.port
+DEFAULT_RELOAD = settings.reload
 
-# File extension constants
-SUPPORTED_EXTENSIONS = {
-    '.pdf', '.docx', '.pptx', '.xlsx', 
-    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
-    '.mp3', '.wav', '.m4a', '.flac',
-    '.html', '.htm', '.csv', '.json', '.xml',
-    '.zip', '.txt', '.md'
-}
+# File validation constants (mapped from settings)
+MAX_FILES_COUNT = settings.max_files_count
+MIN_FILE_SIZE = settings.min_file_size
+MAX_FILENAME_LENGTH = settings.max_filename_length
+MAX_OUTPUT_DIR_LENGTH = settings.max_output_dir_length
 
-# Security constants
-FORBIDDEN_FILENAME_PATTERNS = [
-    '..',       # Directory traversal
-    '/',        # Unix path separator
-    '\\',       # Windows path separator
-    ':',        # Drive separator (Windows)
-    '*',        # Wildcard
-    '?',        # Wildcard
-    '"',        # Quote
-    '<',        # Redirect
-    '>',        # Redirect
-    '|',        # Pipe
-]
+# File extension constants (mapped from settings)
+SUPPORTED_EXTENSIONS = settings.supported_extensions
 
-FORBIDDEN_OUTPUT_DIR_PATTERNS = [
-    '..',       # Directory traversal
-    '/',        # Absolute path
-    '\\',       # Windows absolute path
-    ':',        # Drive separator
-]
+# Security constants (mapped from settings)
+FORBIDDEN_FILENAME_PATTERNS = settings.forbidden_filename_patterns
+FORBIDDEN_OUTPUT_DIR_PATTERNS = settings.forbidden_output_dir_patterns
