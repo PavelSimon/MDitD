@@ -19,11 +19,11 @@
                         <h5 class="mb-0">Upload Documents</h5>
                     </div>
                     <div class="card-body">
-                        <form id="uploadForm" enctype="multipart/form-data">
+                        <form id="uploadForm" enctype="multipart/form-data" class="upload-area">
                             <div class="mb-3">
                                 <label for="files" class="form-label">Select Documents</label>
                                 <input type="file" class="form-control" id="files" name="files" multiple required>
-                                <div class="form-text">Select one or more documents to convert to Markdown</div>
+                                <div class="form-text">Select one or more documents to convert to Markdown, or drag and drop files here</div>
                             </div>
                             
                             <div class="mb-3">
@@ -50,7 +50,8 @@
                         </div>
                         
                         <div class="alert alert-info mt-3">
-                            <strong>Supported formats:</strong> PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), Images, Audio, HTML, CSV, JSON, XML, ZIP
+                            <strong>Supported formats:</strong> PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), Images (.jpg, .png, .gif, .bmp, .tiff), Audio (.mp3, .wav, .m4a, .flac), HTML, CSV, JSON, XML, ZIP, TXT, Markdown
+                            <br><small><strong>File size limit:</strong> 50MB per file, max 20 files</small>
                         </div>
                     </div>
                 </div>
