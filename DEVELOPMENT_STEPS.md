@@ -34,17 +34,19 @@
 - **Status**: DOKONČENÉ - Bootstrap + vlastné CSS štýly, responzívny design
 
 ## Fáza 3: Konverzia logika
-### Krok 3.1: MarkItDown wrapper
+### Krok 3.1: MarkItDown wrapper ✅
 - **Súbor**: `utils/converter.py`
 - **Akcia**: Trieda pre konverziu dokumentov
 - **Funkcionalita**: convert_document(), get_supported_formats()
 - **Čas**: 20 min
+- **Status**: DOKONČENÉ - DocumentConverter trieda s podporou všetkých formátov
 
-### Krok 3.2: File handling utilities
+### Krok 3.2: File handling utilities ✅
 - **Súbor**: `utils/file_handler.py`
 - **Akcia**: Správa súborov a adresárov
 - **Funkcionalita**: save_uploaded_file(), create_output_dir(), cleanup_temp()
 - **Čas**: 15 min
+- **Status**: DOKONČENÉ - FileHandler s kompletnou správou súborov, testované
 
 ## Fáza 4: Web endpoints
 ### Krok 4.1: Upload endpoint

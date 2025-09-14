@@ -4,7 +4,8 @@
       "Bash(git commit:*)",
       "Bash(uv sync:*)",
       "Bash(git add:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(uv run:*)"
     ],
     "deny": [],
     "ask": []
