@@ -12,6 +12,7 @@ const CONFIG = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing MDitD');
     const uploadForm = document.getElementById('uploadForm');
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadSpinner = document.getElementById('uploadSpinner');
@@ -131,14 +132,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add event listeners for preview buttons after DOM is updated
         setTimeout(() => {
+            console.log('Setting up preview buttons for', result.results.length, 'files');
             result.results.forEach((file, index) => {
                 if (file.success && file.content) {
+                    console.log(`File ${index}: ${file.filename} has content, setting up preview`);
                     const btn = document.getElementById(`previewBtn-${index}`);
                     if (btn) {
+                        console.log(`Preview button found for ${file.filename}`);
                         btn.addEventListener('click', () => {
+                            console.log(`Preview clicked for ${file.filename}`);
                             showPreview(file.filename, file.content);
                         });
+                    } else {
+                        console.log(`Preview button NOT found for index ${index}`);
                     }
+                } else {
+                    console.log(`File ${index}: ${file.filename} - success:${file.success}, has content:${!!file.content}`);
                 }
             });
         }, 100);
@@ -467,7 +476,8 @@ function initializePreview() {
     }
 }
 
-function showPreview(filename, content) {
+window.showPreview = function showPreview(filename, content) {
+    console.log('showPreview called with:', filename, content.substring(0, 50) + '...');
     const previewSection = document.getElementById('previewSection');
     const renderedPreview = document.getElementById('renderedPreview');
     const rawContent = document.getElementById('rawContent');
