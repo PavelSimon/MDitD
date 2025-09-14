@@ -49,17 +49,19 @@
 - **Status**: DOKONČENÉ - FileHandler s kompletnou správou súborov, testované
 
 ## Fáza 4: Web endpoints
-### Krok 4.1: Upload endpoint
+### Krok 4.1: Upload endpoint ✅
 - **Súbor**: `main.py`
 - **Akcia**: POST /upload endpoint
 - **Funkcionalita**: Príjem súborov, validácia, konverzia
 - **Čas**: 25 min
+- **Status**: DOKONČENÉ - Implementovaný /upload endpoint s file processing
 
-### Krok 4.2: Results handling
-- **Súbor**: `templates/success.html`, `templates/error.html`
-- **Akcia**: Stránky pre výsledky konverzie
-- **Funkcionalita**: Zobrazenie výsledkov, download linky
+### Krok 4.2: Results handling ✅
+- **Súbor**: `templates/index.html`, `static/js/app.js`
+- **Akcia**: JavaScript pre zobrazenie výsledkov
+- **Funkcionalita**: AJAX upload, progress indicator, results display
 - **Čas**: 15 min
+- **Status**: DOKONČENÉ - Kompletný frontend pre upload a results handling
 
 ## Fáza 5: Vylepšenia
 ### Krok 5.1: JavaScript enhancements
