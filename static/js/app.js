@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayResults(result) {
+        console.log('displayResults called with:', result);
         let html = `
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <br>
                     ${file.success ?
                         `<small class="text-muted">Saved to: ${file.output_path}</small>
-                         ${file.content ? `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showPreview('${file.filename}', \`${escapeHtml(file.content)}\`)">
+                         ${file.content ? `<br><button class="btn btn-sm btn-outline-primary mt-2" id="previewBtn-${index}">
                             <i class="fas fa-eye"></i> Preview
                          </button>` : ''}` :
                         `<small>Error: ${file.error}</small>`
@@ -127,6 +128,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
+
+        // Add event listeners for preview buttons after DOM is updated
+        setTimeout(() => {
+            result.results.forEach((file, index) => {
+                if (file.success && file.content) {
+                    const btn = document.getElementById(`previewBtn-${index}`);
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                            showPreview(file.filename, file.content);
+                        });
+                    }
+                }
+            });
+        }, 100);
 
         resultsContent.innerHTML = html;
         showResults();
