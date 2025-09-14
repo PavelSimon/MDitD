@@ -6,9 +6,14 @@ import shutil
 import tempfile
 import re
 import contextlib
+import asyncio
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, AsyncGenerator
 import logging
+
+import aiofiles
+import aiofiles.os
+from fastapi import UploadFile
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +236,157 @@ class FileHandler:
         finally:
             if temp_path and Path(temp_path).exists():
                 success = self.cleanup_temp_file(temp_path)
+                if success:
+                    logger.info(f"Cleaned up temporary file: {temp_path}")
+                else:
+                    logger.warning(f"Failed to clean up temporary file: {temp_path}")
+
+    # ====== ASYNC METHODS FOR PERFORMANCE IMPROVEMENTS ======
+
+    async def save_uploaded_file_async(self, file: UploadFile, filename: str) -> str:
+        """
+        Async version of save_uploaded_file with streaming support.
+
+        Args:
+            file (UploadFile): FastAPI UploadFile object
+            filename (str): Original filename
+
+        Returns:
+            str: Path to saved file
+        """
+        # Sanitize filename
+        safe_filename = self._sanitize_filename(filename)
+        file_path = self.uploads_dir / safe_filename
+
+        # Handle duplicate filenames
+        counter = 1
+        while await aiofiles.os.path.exists(file_path):
+            name_part = Path(safe_filename).stem
+            ext_part = Path(safe_filename).suffix
+            new_filename = f"{name_part}_{counter}{ext_part}"
+            file_path = self.uploads_dir / new_filename
+            counter += 1
+
+        try:
+            async with aiofiles.open(file_path, 'wb') as f:
+                # Stream file content in chunks to avoid memory issues
+                async for chunk in self._stream_file_chunks(file):
+                    await f.write(chunk)
+
+            logger.info(f"Saved uploaded file: {file_path}")
+            return str(file_path)
+        except Exception as e:
+            logger.error(f"Error saving file {filename}: {str(e)}")
+            raise
+
+    async def _stream_file_chunks(self, file: UploadFile, chunk_size: int = 8192) -> AsyncGenerator[bytes, None]:
+        """
+        Stream file content in chunks to prevent memory exhaustion.
+
+        Args:
+            file (UploadFile): FastAPI UploadFile object
+            chunk_size (int): Size of each chunk in bytes
+
+        Yields:
+            bytes: File chunks
+        """
+        try:
+            while chunk := await file.read(chunk_size):
+                yield chunk
+        finally:
+            # Ensure file pointer is reset for potential reuse
+            await file.seek(0)
+
+    async def save_file_stream_async(self, file: UploadFile, file_path: str, chunk_size: int = 8192) -> None:
+        """
+        Stream file to disk without loading into memory.
+
+        Args:
+            file (UploadFile): FastAPI UploadFile object
+            file_path (str): Destination file path
+            chunk_size (int): Size of each chunk in bytes
+        """
+        try:
+            # Ensure parent directory exists
+            parent_dir = Path(file_path).parent
+            parent_dir.mkdir(parents=True, exist_ok=True)
+
+            async with aiofiles.open(file_path, 'wb') as f:
+                async for chunk in self._stream_file_chunks(file, chunk_size):
+                    await f.write(chunk)
+
+            logger.info(f"Streamed file to: {file_path}")
+        except Exception as e:
+            logger.error(f"Error streaming file to {file_path}: {str(e)}")
+            raise
+
+    async def cleanup_temp_file_async(self, file_path: str) -> bool:
+        """
+        Async version of cleanup_temp_file.
+
+        Args:
+            file_path (str): Path to temporary file
+
+        Returns:
+            bool: Success status
+        """
+        try:
+            if await aiofiles.os.path.exists(file_path):
+                await aiofiles.os.remove(file_path)
+                logger.info(f"Cleaned up temporary file: {file_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error cleaning up {file_path}: {str(e)}")
+            return False
+
+    async def get_file_info_async(self, file_path: str) -> dict:
+        """
+        Async version of get_file_info.
+
+        Args:
+            file_path (str): Path to file
+
+        Returns:
+            dict: File information
+        """
+        try:
+            path = Path(file_path)
+            if await aiofiles.os.path.exists(file_path):
+                stat = await aiofiles.os.stat(file_path)
+                return {
+                    'name': path.name,
+                    'size': stat.st_size,
+                    'extension': path.suffix.lower(),
+                    'exists': True
+                }
+            else:
+                return {
+                    'name': path.name,
+                    'size': 0,
+                    'extension': path.suffix.lower(),
+                    'exists': False
+                }
+        except Exception as e:
+            logger.error(f"Error getting file info for {file_path}: {str(e)}")
+            return {
+                'name': '',
+                'size': 0,
+                'extension': '',
+                'exists': False,
+                'error': str(e)
+            }
+
+    @contextlib.asynccontextmanager
+    async def temporary_file_async(self, file: UploadFile, filename: str):
+        """Async context manager for safe temporary file handling."""
+        temp_path = None
+        try:
+            temp_path = await self.save_uploaded_file_async(file, filename)
+            logger.info(f"Created temporary file: {temp_path}")
+            yield temp_path
+        finally:
+            if temp_path and await aiofiles.os.path.exists(temp_path):
+                success = await self.cleanup_temp_file_async(temp_path)
                 if success:
                     logger.info(f"Cleaned up temporary file: {temp_path}")
                 else:
