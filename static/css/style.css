@@ -1,0 +1,19 @@
+/* MDitD Custom Styles */
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #007bff;
+    color: white;
+}
+
+h1 {
+    color: #333;
+    font-weight: 300;
+}

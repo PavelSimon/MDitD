@@ -13,22 +13,25 @@
 - **Status**: DOKONČENÉ - Všetky adresáre vytvorené, pridaný utils/__init__.py
 
 ## Fáza 2: Základná aplikácia
-### Krok 2.1: FastAPI setup
+### Krok 2.1: FastAPI setup ✅
 - **Súbor**: `main.py`
 - **Akcia**: Základná FastAPI aplikácia s static files handling
 - **Funkcionalita**: Root endpoint, health check
-- **Čas**: 10 min
+- **Čas**: 10 min  
+- **Status**: DOKONČENÉ - FastAPI app beží na http://localhost:8000, health check OK
 
-### Krok 2.2: HTML šablóny
+### Krok 2.2: HTML šablóny ✅
 - **Súbor**: `templates/index.html`
 - **Akcia**: Upload formulár s Bootstrap UI
 - **Funkcionalita**: File input, directory selector, submit button
 - **Čas**: 15 min
+- **Status**: DOKONČENÉ - Základná šablóna s Bootstrap, placeholder pre upload form
 
-### Krok 2.3: CSS styling
+### Krok 2.3: CSS styling ✅
 - **Súbor**: `static/css/style.css`
 - **Akcia**: Vlastné štýly pre lepší vzhľad
 - **Čas**: 10 min
+- **Status**: DOKONČENÉ - Bootstrap + vlastné CSS štýly, responzívny design
 
 ## Fáza 3: Konverzia logika
 ### Krok 3.1: MarkItDown wrapper
