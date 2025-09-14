@@ -4,6 +4,7 @@ File handling utilities for MDitD application.
 import os
 import shutil
 import tempfile
+import re
 from pathlib import Path
 from typing import Optional, List
 import logging
@@ -65,14 +66,35 @@ class FileHandler:
             raise
     
     def _sanitize_filename(self, filename: str) -> str:
-        """Sanitize filename to prevent directory traversal."""
+        """Enhanced filename sanitization to prevent security issues."""
         # Remove path components and keep only filename
         filename = os.path.basename(filename)
         
-        # Replace problematic characters
-        problematic_chars = ['<', '>', ':', '"', '|', '?', '*']
-        for char in problematic_chars:
-            filename = filename.replace(char, '_')
+        # Remove or replace dangerous characters
+        filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+        
+        # Remove control characters
+        filename = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', filename)
+        
+        # Remove leading/trailing dots and spaces
+        filename = filename.strip('. ')
+        
+        # Prevent reserved names (Windows)
+        reserved_names = {
+            'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 
+            'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 
+            'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+        }
+        
+        name_without_ext = Path(filename).stem.upper()
+        if name_without_ext in reserved_names:
+            filename = f"file_{filename}"
+        
+        # Ensure reasonable length
+        if len(filename) > 255:
+            stem = Path(filename).stem[:200]
+            suffix = Path(filename).suffix
+            filename = f"{stem}{suffix}"
         
         # Ensure filename is not empty
         if not filename:
@@ -83,7 +105,7 @@ class FileHandler:
     def create_output_path(self, original_filename: str, 
                           output_dir: Optional[str] = None) -> str:
         """
-        Create output path for markdown file.
+        Create secure output path for markdown file.
         
         Args:
             original_filename (str): Original file name
@@ -91,11 +113,21 @@ class FileHandler:
             
         Returns:
             str: Output path for markdown file
+            
+        Raises:
+            ValueError: If output directory is outside allowed path
         """
         if output_dir:
-            target_dir = Path(output_dir)
+            # Resolve and validate output directory
+            target_dir = Path(output_dir).resolve()
+            # Ensure it's within allowed base directory
+            base_dir = Path.cwd().resolve()
+            try:
+                target_dir.relative_to(base_dir)
+            except ValueError:
+                raise ValueError(f"Output directory outside allowed path: {target_dir}")
         else:
-            target_dir = self.output_dir
+            target_dir = self.output_dir.resolve()
         
         # Ensure output directory exists
         target_dir.mkdir(parents=True, exist_ok=True)

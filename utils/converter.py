@@ -3,8 +3,9 @@ MarkItDown wrapper for document conversion to Markdown.
 """
 import os
 import logging
+import mimetypes
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Set
 from markitdown import MarkItDown
 
 # Configure logging
@@ -24,15 +25,33 @@ class DocumentConverter:
             '.html', '.htm', '.csv', '.json', '.xml',
             '.zip', '.txt', '.md'
         }
+        self.allowed_mime_types: Set[str] = {
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff',
+            'audio/mpeg', 'audio/wav', 'audio/x-m4a', 'audio/flac',
+            'text/html', 'text/csv', 'application/json', 'application/xml', 'text/xml',
+            'application/zip', 'text/plain', 'text/markdown'
+        }
     
     def get_supported_formats(self) -> List[str]:
         """Get list of supported file formats."""
         return list(self.supported_extensions)
     
     def is_supported_format(self, file_path: str) -> bool:
-        """Check if file format is supported."""
+        """Check if file format is supported by extension."""
         extension = Path(file_path).suffix.lower()
         return extension in self.supported_extensions
+    
+    def validate_mime_type(self, filename: str) -> bool:
+        """Validate file MIME type against allowed types."""
+        detected_type, _ = mimetypes.guess_type(filename)
+        if not detected_type:
+            # If MIME type cannot be determined, fall back to extension check
+            return self.is_supported_format(filename)
+        return detected_type in self.allowed_mime_types
     
     def convert_document(self, input_path: str) -> Optional[Dict]:
         """

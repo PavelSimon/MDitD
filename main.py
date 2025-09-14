@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
@@ -7,6 +7,7 @@ import uvicorn
 import os
 from utils.converter import DocumentConverter
 from utils.file_handler import FileHandler
+from config import MAX_FILE_SIZE, MAX_TOTAL_SIZE
 
 app = FastAPI(
     title="MDitD - MarkItDown Web App",
@@ -38,6 +39,23 @@ async def upload_files(
     output_dir: Optional[str] = Form("vystup")
 ):
     """Upload and convert documents to Markdown."""
+    # Validate total size and individual file sizes
+    total_size = 0
+    for file in files:
+        if hasattr(file, 'size') and file.size:
+            if file.size > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File {file.filename} ({file.size:,} bytes) exceeds maximum size limit ({MAX_FILE_SIZE:,} bytes)"
+                )
+            total_size += file.size
+    
+    if total_size > MAX_TOTAL_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Total upload size ({total_size:,} bytes) exceeds limit ({MAX_TOTAL_SIZE:,} bytes)"
+        )
+    
     results = []
     
     for file in files:
@@ -60,12 +78,30 @@ async def upload_files(
                 })
                 continue
             
+            # Validate MIME type for additional security
+            if not converter.validate_mime_type(file.filename):
+                results.append({
+                    "filename": file.filename,
+                    "success": False,
+                    "error": f"File type validation failed"
+                })
+                continue
+            
             # Save uploaded file
             file_content = await file.read()
             temp_path = file_handler.save_uploaded_file(file_content, file.filename)
             
-            # Create output path
-            output_path = file_handler.create_output_path(file.filename, output_dir)
+            # Create output path with security validation
+            try:
+                output_path = file_handler.create_output_path(file.filename, output_dir)
+            except ValueError as e:
+                file_handler.cleanup_temp_file(temp_path)
+                results.append({
+                    "filename": file.filename,
+                    "success": False,
+                    "error": f"Invalid output directory: {str(e)}"
+                })
+                continue
             
             # Convert document
             result = converter.convert_to_file(temp_path, output_path)
