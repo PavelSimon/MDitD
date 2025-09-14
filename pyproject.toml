@@ -1,7 +1,22 @@
 [project]
 name = "mditd"
 version = "0.1.0"
-description = "Add your description here"
+description = "MarkItDown Web Application - Convert documents to Markdown via web interface"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "markitdown[all]>=0.0.1a4",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.2",
+    "uvicorn[standard]>=0.24.0"
+]
+
+[project.scripts]
+mditd = "main:main"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.0",
+    "httpx>=0.25.0"
+]

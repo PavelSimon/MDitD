@@ -1,10 +1,11 @@
 # Vývojové kroky - MDitD
 
 ## Fáza 1: Príprava projektu
-### Krok 1.1: Konfigurácia závislostí
+### Krok 1.1: Konfigurácia závislostí ✅
 - **Súbor**: `pyproject.toml`
 - **Akcia**: Pridanie FastAPI, MarkItDown, python-multipart, jinja2, uvicorn
 - **Čas**: 5 min
+- **Status**: DOKONČENÉ - Závislosti nainštalované cez `uv sync`
 
 ### Krok 1.2: Vytvorenie adresárovej štruktúry
 - **Akcia**: Vytvorenie `utils/`, `templates/`, `static/`, `vystup/`, `uploads/`
