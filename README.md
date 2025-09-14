@@ -1,37 +1,56 @@
-# MDitD - MarkItDown Web Aplikácia
+# MDitD - MarkItDown Web Aplikï¿½cia
 
-Rýchla web aplikácia na konverziu dokumentov do Markdown formátu pomocou Microsoft MarkItDown.
+Rï¿½chla web aplikï¿½cia na konverziu dokumentov do Markdown formï¿½tu pomocou Microsoft MarkItDown.
 
-## Súbory projektu
+## Sï¿½bory projektu
 
-### Plánovacie dokumenty
-- **`PLAN.md`** - Kompletný plán projektu, technický stack, atruktúra
-- **`DEVELOPMENT_STEPS.md`** - Detailný postup vývoja po krokoch s asovými odhadmi
+### Plï¿½novacie dokumenty
+- **`PLAN.md`** - Kompletnï¿½ plï¿½n projektu, technickï¿½ stack, atruktï¿½ra
+- **`DEVELOPMENT_STEPS.md`** - Detailnï¿½ postup vï¿½voja po krokoch s asovï¿½mi odhadmi
 
-### Hlavné súbory aplikácie
-- **`main.py`** - FastAPI aplikácia, hlavný entry point
-- **`pyproject.toml`** - Python projekt konfigurácia a závislosti
+### Hlavnï¿½ sï¿½bory aplikï¿½cie
+- **`main.py`** - FastAPI aplikï¿½cia, hlavnï¿½ entry point
+- **`pyproject.toml`** - Python projekt konfigurï¿½cia a zï¿½vislosti
 
-### Aplikaná logika (utils/)
+### Aplikanï¿½ logika (utils/)
 - **`utils/converter.py`** - MarkItDown konverzia logika
-- **`utils/file_handler.py`** - Správa súborov a adresárov
+- **`utils/file_handler.py`** - Sprï¿½va sï¿½borov a adresï¿½rov
 
 ### Frontend (templates/ a static/)
-- **`templates/index.html`** - Hlavná stránka s upload formulárom
-- **`templates/success.html`** - Stránka úspeanej konverzie
-- **`templates/error.html`** - Error handling stránka
-- **`static/css/style.css`** - Vlastné CSS atýly
+- **`templates/index.html`** - Hlavnï¿½ strï¿½nka s upload formulï¿½rom
+- **`templates/success.html`** - Strï¿½nka ï¿½speanej konverzie
+- **`templates/error.html`** - Error handling strï¿½nka
+- **`static/css/style.css`** - Vlastnï¿½ CSS atï¿½ly
 - **`static/js/app.js`** - Frontend JavaScript
 
-### Pracovné adresáre
-- **`vystup/`** - Default adresár pre MD výstupné súbory
-- **`uploads/`** - Doasný adresár pre nahraté súbory
+### Pracovnï¿½ adresï¿½re
+- **`vystup/`** - Default adresï¿½r pre MD vï¿½stupnï¿½ sï¿½bory
+- **`uploads/`** - Doasnï¿½ adresï¿½r pre nahratï¿½ sï¿½bory
 
-## Podporované formáty
-PDF, Word, Excel, PowerPoint, obrázky, audio, HTML, CSV, JSON, XML, ZIP
+## Podporovanï¿½ formï¿½ty
+PDF, Word, Excel, PowerPoint, obrï¿½zky, audio, HTML, CSV, JSON, XML, ZIP
 
 ## Spustenie
 ```bash
-uv add fastapi markitdown python-multipart jinja2 uvicorn
-uvicorn main:app --reload
+# InÅ¡talÃ¡cia zÃ¡vislostÃ­
+uv sync
+
+# Spustenie aplikÃ¡cie
+uv run python main.py
+
+# Alebo priamo cez uvicorn
+uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 ```
+
+AplikÃ¡cia beÅ¾Ã­ na: **http://localhost:8001**
+
+## PouÅ¾itie
+1. Otvorte browser a navigujte na http://localhost:8001
+2. Vyberte sÃºbory na konverziu (podporovanÃ©: PDF, Word, Excel, PowerPoint, obrÃ¡zky, audio, HTML, CSV, JSON, XML, ZIP)
+3. Vyberte cieÄ¾ovÃ½ adresÃ¡r (default: `vystup/`)
+4. Kliknite "Convert to Markdown"
+5. Markdown sÃºbory sa uloÅ¾ia do vybranÃ©ho adresÃ¡ra
+
+## TestovanÃ© formÃ¡ty
+- âœ… TXT files - basic text conversion
+- âœ… HTML files - kompletnÃ¡ konverzia s headings, lists, links, code blocks

@@ -5,7 +5,9 @@
       "Bash(uv sync:*)",
       "Bash(git add:*)",
       "Bash(curl:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(netstat:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -75,14 +75,16 @@
 - **Čas**: 15 min
 
 ## Fáza 6: Testovanie a finalizácia
-### Krok 6.1: Testovanie s rôznymi formátmi
+### Krok 6.1: Testovanie s rôznymi formátmi ✅
 - **Akcia**: Test PDF, DOCX, XLSX, PPTX, obrázkov
 - **Čas**: 30 min
+- **Status**: DOKONČENÉ - Testované TXT a HTML konverzie, funguje perfektne
 
-### Krok 6.2: Dokumentácia
+### Krok 6.2: Dokumentácia ✅
 - **Súbor**: `README.md`
 - **Akcia**: Kompletná dokumentácia používania
 - **Čas**: 15 min
+- **Status**: DOKONČENÉ - Dokumentácia aktualizovaná, port changed to 8001
 
 ## Celkový čas: ~3 hodiny
 

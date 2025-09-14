@@ -101,7 +101,7 @@ async def get_supported_formats():
     return {"supported_formats": converter.get_supported_formats()}
 
 def main():
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
 
 if __name__ == "__main__":
     main()
