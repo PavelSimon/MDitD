@@ -13,3 +13,6 @@ wheels/
 vystup/
 uploads/
 test_output/
+
+# System files
+nul
