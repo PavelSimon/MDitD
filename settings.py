@@ -2,8 +2,8 @@
 Application settings and configuration management.
 """
 from pathlib import Path
-from typing import Optional, Set
-from pydantic import BaseModel, Field
+from typing import Optional
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

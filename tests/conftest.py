@@ -10,11 +10,19 @@ from typing import Generator, AsyncGenerator
 from fastapi.testclient import TestClient
 import httpx
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from main import app
 from utils.converter import DocumentConverter
 from utils.file_handler import FileHandler
-from settings import settings
+
+
+@pytest.fixture(scope="session")
+def executor() -> Generator[ThreadPoolExecutor, None, None]:
+    """Create a ThreadPoolExecutor for tests."""
+    _executor = ThreadPoolExecutor(max_workers=1)
+    yield _executor
+    _executor.shutdown(wait=True)
 
 
 @pytest.fixture
@@ -60,9 +68,9 @@ def test_output_dir(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def document_converter() -> DocumentConverter:
+def document_converter(executor: ThreadPoolExecutor) -> DocumentConverter:
     """Create a DocumentConverter instance for testing."""
-    return DocumentConverter()
+    return DocumentConverter(executor=executor)
 
 
 @pytest.fixture

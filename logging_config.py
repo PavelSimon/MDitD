@@ -109,7 +109,6 @@ def get_logger(name: str) -> logging.Logger:
 def log_system_info() -> None:
     """Log system and application information for debugging."""
     import platform
-    import os
     from pathlib import Path
 
     logger = get_logger(__name__)

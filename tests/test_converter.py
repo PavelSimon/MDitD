@@ -5,6 +5,8 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
 from utils.converter import DocumentConverter
+from concurrent.futures import ThreadPoolExecutor
+import aiofiles.os
 
 
 class TestDocumentConverter:
@@ -67,27 +69,30 @@ class TestDocumentConverter:
         result = document_converter.validate_mime_type(filename)
         assert result == expected
 
-    def test_convert_document_nonexistent_file(self, document_converter: DocumentConverter):
+    @pytest.mark.asyncio
+    async def test_convert_document_nonexistent_file(self, document_converter: DocumentConverter):
         """Test converting a non-existent file."""
-        result = document_converter.convert_document("/nonexistent/path/file.txt")
+        result = await document_converter.convert_document("/nonexistent/path/file.txt")
         assert result['success'] is False
         assert 'File not found' in result['error']
         assert result['content'] is None
 
-    def test_convert_document_unsupported_format(self, document_converter: DocumentConverter, temp_dir: Path):
+    @pytest.mark.asyncio
+    async def test_convert_document_unsupported_format(self, document_converter: DocumentConverter, temp_dir: Path):
         """Test converting an unsupported file format."""
         # Create an unsupported file
         unsupported_file = temp_dir / "test.exe"
         unsupported_file.write_bytes(b"fake executable")
 
-        result = document_converter.convert_document(str(unsupported_file))
+        result = await document_converter.convert_document(str(unsupported_file))
         assert result['success'] is False
         assert 'Unsupported file format' in result['error']
         assert result['content'] is None
 
-    def test_convert_document_text_file(self, document_converter: DocumentConverter, sample_text_file: Path):
+    @pytest.mark.asyncio
+    async def test_convert_document_text_file(self, document_converter: DocumentConverter, sample_text_file: Path):
         """Test converting a text file."""
-        result = document_converter.convert_document(str(sample_text_file))
+        result = await document_converter.convert_document(str(sample_text_file))
 
         if result['success']:
             assert result['content'] is not None
@@ -99,9 +104,10 @@ class TestDocumentConverter:
             assert result['error'] is not None
             assert result['content'] is None
 
-    def test_convert_document_html_file(self, document_converter: DocumentConverter, sample_html_file: Path):
+    @pytest.mark.asyncio
+    async def test_convert_document_html_file(self, document_converter: DocumentConverter, sample_html_file: Path):
         """Test converting an HTML file."""
-        result = document_converter.convert_document(str(sample_html_file))
+        result = await document_converter.convert_document(str(sample_html_file))
 
         if result['success']:
             assert result['content'] is not None
@@ -111,9 +117,10 @@ class TestDocumentConverter:
             # If conversion fails, ensure error is reported
             assert result['error'] is not None
 
-    def test_convert_document_json_file(self, document_converter: DocumentConverter, sample_json_file: Path):
+    @pytest.mark.asyncio
+    async def test_convert_document_json_file(self, document_converter: DocumentConverter, sample_json_file: Path):
         """Test converting a JSON file."""
-        result = document_converter.convert_document(str(sample_json_file))
+        result = await document_converter.convert_document(str(sample_json_file))
 
         if result['success']:
             assert result['content'] is not None
@@ -123,8 +130,9 @@ class TestDocumentConverter:
             # If conversion fails, ensure error is reported
             assert result['error'] is not None
 
+    @pytest.mark.asyncio
     @patch('utils.converter.MarkItDown')
-    def test_convert_document_markitdown_failure(self, mock_markitdown, document_converter: DocumentConverter, sample_text_file: Path):
+    async def test_convert_document_markitdown_failure(self, mock_markitdown, executor: ThreadPoolExecutor, sample_text_file: Path):
         """Test handling of MarkItDown conversion failure."""
         # Mock MarkItDown to raise an exception
         mock_instance = Mock()
@@ -132,57 +140,61 @@ class TestDocumentConverter:
         mock_markitdown.return_value = mock_instance
 
         # Create a new converter instance with mocked MarkItDown
-        converter = DocumentConverter()
-        result = converter.convert_document(str(sample_text_file))
+        converter = DocumentConverter(executor=executor)
+        result = await converter.convert_document(str(sample_text_file))
 
         assert result['success'] is False
         assert result['content'] is None
         assert 'MarkItDown error' in result['error']
 
-    def test_convert_document_empty_result(self, document_converter: DocumentConverter, sample_text_file: Path):
+    @pytest.mark.asyncio
+    async def test_convert_document_empty_result(self, document_converter: DocumentConverter, sample_text_file: Path):
         """Test handling of empty MarkItDown result."""
         # Mock the markitdown instance to return None (no result)
         document_converter.markitdown.convert = Mock(return_value=None)
 
-        result = document_converter.convert_document(str(sample_text_file))
+        result = await document_converter.convert_document(str(sample_text_file))
 
         assert result['success'] is False
         assert result['content'] is None
         assert 'empty' in result['error'].lower()
 
-    def test_convert_to_file_success(self, document_converter: DocumentConverter, sample_text_file: Path, temp_dir: Path):
+    @pytest.mark.asyncio
+    async def test_convert_to_file_success(self, document_converter: DocumentConverter, sample_text_file: Path, temp_dir: Path):
         """Test successful conversion to file."""
         output_file = temp_dir / "output.md"
 
-        result = document_converter.convert_to_file(str(sample_text_file), str(output_file))
+        result = await document_converter.convert_to_file(str(sample_text_file), str(output_file))
 
         if result['success']:
             assert result['output_path'] == str(output_file)
             assert output_file.exists()
             assert output_file.stat().st_size > 0
             # Clean up
-            output_file.unlink()
+            await aiofiles.os.remove(output_file)
         else:
             # If conversion fails, file should not exist
             assert not output_file.exists()
 
-    def test_convert_to_file_conversion_failure(self, document_converter: DocumentConverter, temp_dir: Path):
+    @pytest.mark.asyncio
+    async def test_convert_to_file_conversion_failure(self, document_converter: DocumentConverter, temp_dir: Path):
         """Test convert_to_file with conversion failure."""
         nonexistent_file = temp_dir / "nonexistent.txt"
         output_file = temp_dir / "output.md"
 
-        result = document_converter.convert_to_file(str(nonexistent_file), str(output_file))
+        result = await document_converter.convert_to_file(str(nonexistent_file), str(output_file))
 
         assert result['success'] is False
         assert result['error'] is not None
         assert not output_file.exists()
 
-    def test_convert_to_file_write_permission_error(self, document_converter: DocumentConverter, sample_text_file: Path):
+    @pytest.mark.asyncio
+    async def test_convert_to_file_write_permission_error(self, document_converter: DocumentConverter, sample_text_file: Path):
         """Test convert_to_file with write permission error."""
         # Try to write to an invalid path (should fail on Windows)
         invalid_output = "/invalid/path/output.md"
 
-        result = document_converter.convert_to_file(str(sample_text_file), invalid_output)
+        result = await document_converter.convert_to_file(str(sample_text_file), invalid_output)
 
         # This should fail due to path issues, but behavior might vary by system
         # Just ensure we get a reasonable response
@@ -222,10 +234,11 @@ class TestDocumentConverterEdgeCases:
         # Should still work based on extension
         assert document_converter.is_supported_format(long_name) is True
 
+    @pytest.mark.asyncio
     @pytest.mark.slow
-    def test_convert_large_file(self, document_converter: DocumentConverter, sample_large_file: Path):
+    async def test_convert_large_file(self, document_converter: DocumentConverter, sample_large_file: Path):
         """Test converting a large file (marked as slow test)."""
-        result = document_converter.convert_document(str(sample_large_file))
+        result = await document_converter.convert_document(str(sample_large_file))
 
         # This test might be slow or fail due to size limits
         # Just ensure we get a reasonable response

@@ -2,14 +2,12 @@
 Tests for FastAPI endpoints.
 """
 import pytest
-import json
 from pathlib import Path
 from io import BytesIO
 from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import httpx
 
-from main import app
 
 
 class TestAPIEndpoints:

@@ -4,9 +4,12 @@ MarkItDown wrapper for document conversion to Markdown.
 import os
 import logging
 import mimetypes
+import asyncio
+import aiofiles
 from pathlib import Path
 from typing import Optional, Dict, List, Set
 from markitdown import MarkItDown
+from concurrent.futures import ThreadPoolExecutor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,9 +18,10 @@ logger = logging.getLogger(__name__)
 class DocumentConverter:
     """Wrapper class for MarkItDown document conversion."""
     
-    def __init__(self):
+    def __init__(self, executor: ThreadPoolExecutor):
         """Initialize the converter."""
         self.markitdown = MarkItDown()
+        self.executor = executor
         self.supported_extensions = {
             '.pdf', '.docx', '.pptx', '.xlsx', 
             '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff',
@@ -53,7 +57,7 @@ class DocumentConverter:
             return self.is_supported_format(filename)
         return detected_type in self.allowed_mime_types
     
-    def convert_document(self, input_path: str) -> Optional[Dict]:
+    async def convert_document(self, input_path: str) -> Optional[Dict]:
         """
         Convert document to Markdown.
         
@@ -80,7 +84,14 @@ class DocumentConverter:
                 }
             
             logger.info(f"Converting document: {input_path}")
-            result = self.markitdown.convert(input_path)
+            
+            # Run the CPU-bound conversion in the thread pool
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                self.executor,
+                self.markitdown.convert,
+                input_path
+            )
             
             if result and hasattr(result, 'text_content'):
                 logger.info(f"Successfully converted {input_path}")
@@ -104,7 +115,7 @@ class DocumentConverter:
                 'error': str(e)
             }
     
-    def convert_to_file(self, input_path: str, output_path: str) -> Dict:
+    async def convert_to_file(self, input_path: str, output_path: str) -> Dict:
         """
         Convert document and save to file.
         
@@ -115,15 +126,15 @@ class DocumentConverter:
         Returns:
             Dict with conversion result
         """
-        result = self.convert_document(input_path)
+        result = await self.convert_document(input_path)
         
         if result['success']:
             try:
-                # Ensure output directory exists
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                # Ensure output directory exists asynchronously
+                await aiofiles.os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(result['content'])
+                async with aiofiles.open(output_path, 'w', encoding='utf-8') as f:
+                    await f.write(result['content'])
                 
                 logger.info(f"Saved converted content to: {output_path}")
                 result['output_path'] = output_path

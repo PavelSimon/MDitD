@@ -5,7 +5,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any, AsyncGenerator
 import uvicorn
-import os
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -14,7 +13,7 @@ from pathlib import Path
 from utils.converter import DocumentConverter
 from utils.file_handler import FileHandler
 from settings import settings
-from logging_config import setup_logging, log_system_info, log_request_info, log_file_processing
+from logging_config import setup_logging, log_system_info
 
 # Initialize logging
 setup_logging()
@@ -58,7 +57,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Initialize services
-converter = DocumentConverter()
+converter = DocumentConverter(executor=executor)
 file_handler = FileHandler()
 
 @app.get("/")
@@ -200,11 +199,8 @@ async def process_single_file_async(file: UploadFile, output_dir: Optional[str])
 
         # Use async context manager for safe temporary file handling
         async with file_handler.temporary_file_async(file, file.filename) as temp_path:
-            # Convert document using executor for CPU-intensive work
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                executor,
-                converter.convert_to_file,
+            # Convert document asynchronously
+            result = await converter.convert_to_file(
                 temp_path,
                 output_path
             )
@@ -236,7 +232,7 @@ async def process_single_file_async(file: UploadFile, output_dir: Optional[str])
             "success": False,
             "error": f"System error: {e.strerror if hasattr(e, 'strerror') else str(e)}. This may be due to insufficient disk space, file corruption, or system limitations."
         }
-    except Exception as e:
+    except Exception:
         return {
             "filename": file.filename if hasattr(file, 'filename') else "unknown",
             "success": False,

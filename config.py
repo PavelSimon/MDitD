@@ -4,7 +4,6 @@ DEPRECATED: This module is being replaced by settings.py with pydantic-settings.
 Kept for backward compatibility during migration.
 """
 import warnings
-from pathlib import Path
 from settings import settings
 
 # Deprecation warning

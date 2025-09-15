@@ -2,11 +2,9 @@
 Tests for FileHandler functionality.
 """
 import pytest
-import asyncio
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 from fastapi import UploadFile
-from io import BytesIO
 
 from utils.file_handler import FileHandler
 
